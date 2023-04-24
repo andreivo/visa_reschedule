@@ -18,7 +18,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-
 config = configparser.ConfigParser()
 config.read('config.ini')
 
@@ -82,10 +81,19 @@ def send_notification(msg):
 
 
 def get_driver():
+    print("get_driver...")
+    options_ = webdriver.ChromeOptions()
+    options_.add_argument("--headless")
+    
     if LOCAL_USE:
-        dr = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+        dr = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options_)
     else:
         dr = webdriver.Remote(command_executor=HUB_ADDRESS, options=webdriver.ChromeOptions())
+    
+    #options_ = webdriver.ChromeOptions()
+    #options_.add_argument("--headless")
+    #dr = webdriver.Chrome('D://projetos//projetos.pessoais//github//visa_reschedule//driver/chromedriver.exe', options=options_)   
+    print("end get_driver...")
     return dr
 
 driver = get_driver()
@@ -260,8 +268,9 @@ if __name__ == "__main__":
             print()
             print(f"New date: {date}")
             if date:
-                reschedule(date)
-                push_notification(dates)
+            	print(f"reschedule({date})")
+                # reschedule(date)
+                # push_notification(dates)
 
             if(EXIT):
                 print("------------------exit")
