@@ -99,7 +99,7 @@ def login():
     a = driver.find_element(By.XPATH, '//a[@class="down-arrow bounce"]')
     a.click()
     time.sleep(STEP_TIME)
-
+    
     print("Login start...")
     href = driver.find_element(By.XPATH, '//*[@id="header"]/nav/div[1]/div[1]/div[2]/div[1]/ul/li[3]/a')
    
@@ -141,8 +141,30 @@ def do_login_action():
     print("\tlogin successful!")
 
 def go_to_reschedule():
-    print("\tgo to reschedule")
+    print("Go to reschedule...")
+    print("\tcontinue")
+    a = driver.find_element(By.XPATH, '//*[@id="main"]/div[2]/div[2]/div[1]/div/div/div[1]/div[2]/ul/li/a')
+    a.click()
+    time.sleep(STEP_TIME)
     
+    Wait(driver, 60).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="forms"]/ul/li[4]')))
+          
+    print("\reschedule 1 ")
+    a = driver.find_element(By.XPATH, '//*[@id="forms"]/ul/li[4]')
+    a.click()
+    time.sleep(STEP_TIME)
+    
+    Wait(driver, 60).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[4]/main/div[2]/div[2]/div/section/ul/li[4]/div/div/div[2]/p[2]/a')))
+                   
+    print("\reschedule 2 - button")
+    a = driver.find_element(By.XPATH, '/html/body/div[4]/main/div[2]/div[2]/div/section/ul/li[4]/div/div/div[2]/p[2]/a')
+    a.click()
+    time.sleep(STEP_TIME)
+    
+    Wait(driver, 60).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="appointments_consulate_appointment_facility_id"]')))   
 
 def get_date():
     driver.get(DATE_URL)
@@ -242,7 +264,6 @@ def push_notification(dates):
 
 if __name__ == "__main__":
     login()
-    go_to_reschedule()
     retry_count = 0
     while 1:    
         if retry_count > 6:
@@ -252,6 +273,8 @@ if __name__ == "__main__":
             print(datetime.today())
             print(f"Retry count: {retry_count}")
             print()
+            
+            go_to_reschedule()
 
             dates = get_date()[:5]
             if not dates:
