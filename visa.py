@@ -37,7 +37,6 @@ HUB_ADDRESS = config['CHROMEDRIVER']['HUB_ADDRESS']
 
 REGEX_CONTINUE = "//a[contains(text(),'Continuar')]"
 
-
 # def MY_CONDITION(month, day): return int(month) == 11 and int(day) >= 5
 def MY_CONDITION(month, day): return True # No custom condition wanted for the new scheduled date
 
@@ -50,7 +49,6 @@ DATE_URL = f"https://ais.usvisa-info.com/{COUNTRY_CODE}/niv/schedule/{SCHEDULE_I
 TIME_URL = f"https://ais.usvisa-info.com/{COUNTRY_CODE}/niv/schedule/{SCHEDULE_ID}/appointment/times/{FACILITY_ID}.json?date=%s&appointments[expedite]=false"
 APPOINTMENT_URL = f"https://ais.usvisa-info.com/{COUNTRY_CODE}/niv/schedule/{SCHEDULE_ID}/appointment"
 EXIT = False
-
 
 def send_notification(msg):
     print(f"Sending notification: {msg}")
@@ -79,20 +77,15 @@ def send_notification(msg):
         }
         requests.post(url, data)
 
-
 def get_driver():
     print("get_driver...")
     options_ = webdriver.ChromeOptions()
     options_.add_argument("--headless")
     
     if LOCAL_USE:
-        dr = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options_)
+        dr = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     else:
-        dr = webdriver.Remote(command_executor=HUB_ADDRESS, options=webdriver.ChromeOptions())
-    
-    #options_ = webdriver.ChromeOptions()
-    #options_.add_argument("--headless")
-    #dr = webdriver.Chrome('D://projetos//projetos.pessoais//github//visa_reschedule//driver/chromedriver.exe', options=options_)   
+        dr = webdriver.Remote(command_executor=HUB_ADDRESS, options=webdriver.ChromeOptions())    
     print("end get_driver...")
     return dr
 
@@ -147,6 +140,9 @@ def do_login_action():
         EC.presence_of_element_located((By.XPATH, REGEX_CONTINUE)))
     print("\tlogin successful!")
 
+def go_to_reschedule():
+    print("\tgo to reschedule")
+    
 
 def get_date():
     driver.get(DATE_URL)
@@ -215,9 +211,7 @@ def print_dates(dates):
         print("%s \t business_day: %s" % (d.get('date'), d.get('business_day')))
     print()
 
-
 last_seen = None
-
 
 def get_available_date(dates):
     global last_seen
@@ -248,8 +242,9 @@ def push_notification(dates):
 
 if __name__ == "__main__":
     login()
+    go_to_reschedule()
     retry_count = 0
-    while 1:
+    while 1:    
         if retry_count > 6:
             break
         try:
@@ -268,7 +263,7 @@ if __name__ == "__main__":
             print()
             print(f"New date: {date}")
             if date:
-            	print(f"reschedule({date})")
+                print(f"reschedule({date})")
                 # reschedule(date)
                 # push_notification(dates)
 
@@ -285,6 +280,8 @@ if __name__ == "__main__":
               time.sleep(RETRY_TIME)
 
         except:
+            print("------------------")
+            print(f"Exception: Sleep {EXCEPTION_TIME}")
             retry_count += 1
             time.sleep(EXCEPTION_TIME)
 
