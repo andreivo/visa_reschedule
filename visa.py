@@ -79,8 +79,8 @@ def send_notification(msg):
 
 def get_driver():
     print("get_driver...")
-    options_ = webdriver.ChromeOptions()
-    options_.add_argument("--headless")
+    #options_ = webdriver.ChromeOptions()
+    #options_.add_argument("--headless")
     
     if LOCAL_USE:
         dr = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
