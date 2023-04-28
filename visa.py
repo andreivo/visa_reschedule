@@ -150,7 +150,7 @@ def go_to_reschedule():
     Wait(driver, 60).until(
         EC.presence_of_element_located((By.XPATH, '//*[@id="forms"]/ul/li[4]')))
           
-    print("\reschedule 1 ")
+    print("\treschedule 1 ")
     a = driver.find_element(By.XPATH, '//*[@id="forms"]/ul/li[4]')
     a.click()
     time.sleep(STEP_TIME)
@@ -158,7 +158,7 @@ def go_to_reschedule():
     Wait(driver, 60).until(
         EC.presence_of_element_located((By.XPATH, '/html/body/div[4]/main/div[2]/div[2]/div/section/ul/li[4]/div/div/div[2]/p[2]/a')))
                    
-    print("\reschedule 2 - button")
+    print("\treschedule 2 - button")
     a = driver.find_element(By.XPATH, '/html/body/div[4]/main/div[2]/div[2]/div/section/ul/li[4]/div/div/div[2]/p[2]/a')
     a.click()
     time.sleep(STEP_TIME)
@@ -167,14 +167,18 @@ def go_to_reschedule():
         EC.presence_of_element_located((By.XPATH, '//*[@id="appointments_consulate_appointment_facility_id"]')))   
 
 def get_date():
-    driver.get(DATE_URL)
-    if not is_logged_in():
-        login()
-        return get_date()
-    else:
-        content = driver.find_element(By.TAG_NAME, 'pre').text
-        date = json.loads(content)
-        return date
+    date = driver.execute_script('var result; $.getJSON("https://ais.usvisa-info.com/pt-br/niv/schedule/47405742/appointment/days/56.json?appointments[expedite]=false", function( data ) { result = data}); return result;')
+    print(date)
+    return date
+    
+   #driver.get(DATE_URL)
+   # if not is_logged_in():
+   #     login()
+   #     return get_date()
+   # else:
+   #     content = driver.find_element(By.TAG_NAME, 'pre').text
+   #     date = json.loads(content)
+   #     return date
 
 
 def get_time(date):
