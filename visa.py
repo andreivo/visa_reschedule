@@ -58,7 +58,7 @@ def send_notification(msg):
         message = Mail(
             from_email=USERNAME,
             to_emails=USERNAME,
-            subject=msg,
+            subject=f"VISA-REESCHEDULER ({SCHEDULE_ID})",
             html_content=msg)
         try:
             sg = SendGridAPIClient(SENDGRID_API_KEY)
@@ -237,7 +237,7 @@ def get_time(date):
 def reschedule_best_date():
     consulateDates = get_consulateDate()[:5]
     if not consulateDates:
-        msg = "List is empty"
+        msg = f"List of consulate dates is empty. Query is {datetime.today()}"
         send_notification(msg)
         return False
         
@@ -329,52 +329,59 @@ def push_notification(dates):
 
 
 if __name__ == "__main__":
-    login()
-    retry_count = 0
-    while 1:    
-        if retry_count > 6:
-            break
-        try:
-            print("------------------")
-            print(datetime.today())
-            print(f"Retry count: {retry_count}")
-            print()
-            
-            go_to_reschedulepage()
-            
-            EXIT = not reschedule_best_date()
-
-            #dates = get_date()[:5]
-            #if not dates:
-            #  msg = "List is empty"
-            #  send_notification(msg)
-            #  EXIT = True
-            #print_dates(dates)
-            #date = get_available_date(dates)
-            #print()
-            #print(f"New date: {date}")
-            #if date:
-            #    print(f"reschedule({date})")
-                # reschedule(date)
-                # push_notification(dates)
-
-            if(EXIT):
-                print("------------------exit")
+    try:
+        login()
+        retry_count = 0
+        while 1:    
+            if retry_count > 6:
                 break
+            try:
+                print("------------------")
+                print(datetime.today())
+                print(f"Retry count: {retry_count}")
+                print()
 
-            if not dates:
-              msg = "List is empty"
-              send_notification(msg)
-              #EXIT = True
-              time.sleep(COOLDOWN_TIME)
-            else:
-              time.sleep(RETRY_TIME)
+                go_to_reschedulepage()
 
-        except:
-            print("------------------")
-            print(f"Exception: Sleep {EXCEPTION_TIME}")
-            retry_count += 1
-            time.sleep(EXCEPTION_TIME)
+                EXIT = not reschedule_best_date()
 
-    if(not EXIT):
-        send_notification("HELP! Crashed.")
+                #dates = get_date()[:5]
+                #if not dates:
+                #  msg = "List is empty"
+                #  send_notification(msg)
+                #  EXIT = True
+                #print_dates(dates)
+                #date = get_available_date(dates)
+                #print()
+                #print(f"New date: {date}")
+                #if date:
+                #    print(f"reschedule({date})")
+                    # reschedule(date)
+                    # push_notification(dates)
+
+                if(EXIT):
+                    print("------------------exit")
+                    break
+
+                if not dates:
+                  msg = "List is empty"
+                  send_notification(msg)
+                  #EXIT = True
+                  time.sleep(COOLDOWN_TIME)
+                else:
+                  time.sleep(RETRY_TIME)
+
+            except:
+                print("------------------")
+                print(f"Exception: Sleep {EXCEPTION_TIME}")
+                retry_count += 1
+                time.sleep(EXCEPTION_TIME)
+
+        if(not EXIT):
+            send_notification("HELP! Crashed.")
+
+    except Exception as EX:         
+        print("------------------")
+        print(f"Exception: {EX}")
+        #msg = f"Failed attempt on {datetime.today()}"
+        #send_notification(msg)
