@@ -167,8 +167,11 @@ def go_to_reschedule():
         EC.presence_of_element_located((By.XPATH, '//*[@id="appointments_consulate_appointment_facility_id"]')))   
 
 def get_date():
-    date = driver.execute_script('var result; $.getJSON("https://ais.usvisa-info.com/pt-br/niv/schedule/47405742/appointment/days/56.json?appointments[expedite]=false", function( data ) { result = data}); return result;')
-    print(date)
+    print("\tget_date")
+    # wait for the elment to be presented
+    date = WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('var result; $.getJSON("https://ais.usvisa-info.com/pt-br/niv/schedule/47405742/appointment/days/56.json?appointments[expedite]=false", function( data ) { result = data}); return result;'))
+    # print the text of the element
+    print (date)    
     return date
     
    #driver.get(DATE_URL)
