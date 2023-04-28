@@ -54,6 +54,7 @@ def send_notification(msg):
     print(f"Sending notification: {msg}")
 
     if SENDGRID_API_KEY:
+        print(f"Sending SENDGRID_API: {SENDGRID_API_KEY}")
         message = Mail(
             from_email=USERNAME,
             to_emails=USERNAME,
@@ -140,8 +141,8 @@ def do_login_action():
         EC.presence_of_element_located((By.XPATH, REGEX_CONTINUE)))
     print("\tlogin successful!")
 
-def go_to_reschedule():
-    print("Go to reschedule...")
+def go_to_reschedulepage():
+    print("Go to reschedule page...")
     print("\tcontinue")
     a = driver.find_element(By.XPATH, '//*[@id="main"]/div[2]/div[2]/div[1]/div/div/div[1]/div[2]/ul/li/a')
     a.click()
@@ -166,24 +167,64 @@ def go_to_reschedule():
     Wait(driver, 60).until(
         EC.presence_of_element_located((By.XPATH, '//*[@id="appointments_consulate_appointment_facility_id"]')))   
 
-def get_date():
-    print("\tget_date")
-    # wait for the elment to be presented
-    date = WebDriverWait(driver, 30).until(lambda driver: driver.execute_script('var result; $.getJSON("https://ais.usvisa-info.com/pt-br/niv/schedule/47405742/appointment/days/56.json?appointments[expedite]=false", function( data ) { result = data}); return result;'))
-    # print the text of the element
-    print (date)    
-    return date
+def get_consulateDate():    
+    print("\tget_consulatedate")
+    #########################
+    # Workaround to avoid blocking the site (we use a $.getJSON insted of native driver.get with a son.loads)
+    #
+    # original code
+    # ---------------------------------------
+    # driver.get(DATE_URL)
+    # if not is_logged_in():
+    #     login()
+    #     return get_date()
+    # else:
+    #     content = driver.find_element(By.TAG_NAME, 'pre').text
+    #     date = json.loads(content)
+    #     return date
+    # ---------------------------------------
+    #########################
     
-   #driver.get(DATE_URL)
-   # if not is_logged_in():
-   #     login()
-   #     return get_date()
-   # else:
-   #     content = driver.find_element(By.TAG_NAME, 'pre').text
-   #     date = json.loads(content)
-   #     return date
-
-
+    # execute $.getJSON and writes a <pre> html element
+    driver.execute_script(f'var resultConsulateDate,prescript=$("<pre />");prescript.attr({{id:"getConsulateDate_done",name:"getConsulateDate_done"}}),$.getJSON("{DATE_URL}",(function(e){{resultConsulateDate=e}})).done((function(){{$("body").append(prescript),document.getElementById("getConsulateDate_done").innerHTML=JSON.stringify(resultConsulateDate)}}));')    
+    # wait for a <pre> html element
+    Wait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'getConsulateDate_done')))
+    # get data from <pre> html element
+    dates = driver.execute_script('return JSON.parse(document.getElementById("getConsulateDate_done").innerHTML);')
+    print("")    
+    print("\tend get_consulatedate")    
+    return dates
+    
+def get_consulateTime(date):
+    print("\tget_consulatetime")
+    #########################
+    # Workaround to avoid blocking the site (we use a $.getJSON insted of native driver.get with a son.loads)
+    #
+    # original code
+    # ---------------------------------------
+    # time_url = TIME_URL % date
+    # driver.get(time_url)
+    # content = driver.find_element(By.TAG_NAME, 'pre').text
+    # data = json.loads(content)
+    # time = data.get("available_times")[-1]
+    # print(f"Got time successfully! {date} {time}")
+    # return time
+    # ---------------------------------------    
+    #########################
+    
+    time_url = TIME_URL % date
+    # execute $.getJSON and writes a <pre> html element
+    driver.execute_script(f'var resultConsulateTime,prescript=$("<pre />");prescript.attr({{id:"getConsulateTime_done",name:"getConsulateTime_done"}}),$.getJSON("{time_url}",(function(e){{resultConsulateTime=e}})).done((function(){{$("body").append(prescript),document.getElementById("getConsulateTime_done").innerHTML=JSON.stringify(resultConsulateTime)}}));')    
+    # wait for a <pre> html element
+    Wait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'getConsulateTime_done')))
+    # get data from <pre> html element
+    times = driver.execute_script('return JSON.parse(document.getElementById("getConsulateTime_done").innerHTML);')
+    print("")       
+    time = times.get("available_times")[-1]
+    print(f"\tGot time successfully! {date} {time}")
+    print("\tend get_consulatetime")  
+    return time
+    
 def get_time(date):
     time_url = TIME_URL % date
     driver.get(time_url)
@@ -191,8 +232,26 @@ def get_time(date):
     data = json.loads(content)
     time = data.get("available_times")[-1]
     print(f"Got time successfully! {date} {time}")
-    return time
+    return time       
+    
+def reschedule_best_date():
+    consulateDates = get_consulateDate()[:5]
+    if not consulateDates:
+        msg = "List is empty"
+        send_notification(msg)
+        return False
+        
+    print_dates(consulateDates)
+    consulateDate = get_available_date(consulateDates)
+    print()
+    print(f"New date: {consulateDate}")
+    if consulateDate:
+        consulateTime = get_consulateTime(date)
+        print(f"reschedule({date})")
+        # reschedule(date)
+        # push_notification(dates)
 
+    return True
 
 def reschedule(date):
     global EXIT
@@ -281,19 +340,21 @@ if __name__ == "__main__":
             print(f"Retry count: {retry_count}")
             print()
             
-            go_to_reschedule()
+            go_to_reschedulepage()
+            
+            EXIT = not reschedule_best_date()
 
-            dates = get_date()[:5]
-            if not dates:
-              msg = "List is empty"
-              send_notification(msg)
-              EXIT = True
-            print_dates(dates)
-            date = get_available_date(dates)
-            print()
-            print(f"New date: {date}")
-            if date:
-                print(f"reschedule({date})")
+            #dates = get_date()[:5]
+            #if not dates:
+            #  msg = "List is empty"
+            #  send_notification(msg)
+            #  EXIT = True
+            #print_dates(dates)
+            #date = get_available_date(dates)
+            #print()
+            #print(f"New date: {date}")
+            #if date:
+            #    print(f"reschedule({date})")
                 # reschedule(date)
                 # push_notification(dates)
 
